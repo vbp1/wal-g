@@ -17,6 +17,13 @@ services:
     image: wal-g/golang
     container_name: wal-g_golang
 
+  ubuntu:
+    build:
+      dockerfile: ./docker/ubuntu/Dockerfile
+      context: .
+    image: wal-g/ubuntu:18.04
+    container_name: wal-g_ubuntu
+
   s3:
     image: minio/minio:RELEASE.2021-06-07T21-40-51Z
     container_name: wal-g_s3
