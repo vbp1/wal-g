@@ -155,12 +155,10 @@ services:
     image: wal-g/docker_prefix
     container_name: wal-g_pg_docker_prefix
 
-  pg_test_common: &pg_test_common
+  pg_delete_before_permanent_delta_test:
     image: wal-g/docker_prefix
     user: postgres
     <<: *s3_common_depends
-
-  pg_delete_before_permanent_delta_test:
-    <<: *pg_test_common
     container_name: wal-g_pg_delete_before_permanent_delta_test
     command: /tmp/tests/delete_before_permanent_delta_test.sh
+
