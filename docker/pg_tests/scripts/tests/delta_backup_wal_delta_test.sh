@@ -31,7 +31,8 @@ psql -f /tmp/sql/check_toast.sql
 
 wal-g --config=${TMP_CONFIG} backup-push ${PGDATA}
 
-pgbench -c 2 -f /tmp/sql/transactions.sql -T 10000 --no-vacuum &
+
+{ while : ; do pgbench -c 2 -f /tmp/sql/transactions.sql -T 10000 --no-vacuum || true; done } &
 sleep 3
 
 for i in 1 2 3
