@@ -1,0 +1,6 @@
+FROM wal-g/docker_prefix
+
+
+COPY docker/pg_tests/scripts/ /tmp
+#RUN ls -la /tmp
+RUN mkdir -p /tmp/logs/ && chmod 777 /tmp/configs/ && chmod 777 /tmp/logs/
