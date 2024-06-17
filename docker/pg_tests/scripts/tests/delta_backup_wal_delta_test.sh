@@ -26,15 +26,18 @@ wal-g --config=${TMP_CONFIG} delete everything FORCE --confirm
 psql -f /tmp/sql/init.sql
 psql -f /tmp/sql/check_toast.sql
 
+pgbench -c 10 -f /tmp/sql/transactions.sql -t 10000 --no-vacuum || true
+psql -f /tmp/sql/check_toast.sql
+
 wal-g --config=${TMP_CONFIG} backup-push ${PGDATA}
 
-pgbench -c 1 -f /tmp/sql/transactions.sql -T 10000 --no-vacuum &
+pgbench -c 2 -f /tmp/sql/transactions.sql -T 10000 --no-vacuum &
 sleep 3
 
 for i in 1 2 3
 do
   start_lsn=$(psql -Atc "SELECT pg_current_wal_lsn();")
-  pgbench -c 10 -f /tmp/sql/transactions.sql -t 10000 --no-vacuum || true
+  pgbench -c 10 -f /tmp/sql/transactions.sql -t 40000 --no-vacuum || true
   sleep 1
   end_lsn=$(psql -Atc "SELECT pg_current_wal_lsn();")
   wal_volume=$(psql -Atc "SELECT pg_size_pretty(pg_wal_lsn_diff('$end_lsn', '$start_lsn'));")
