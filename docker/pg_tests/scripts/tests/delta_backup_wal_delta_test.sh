@@ -33,12 +33,13 @@ wal-g --config=${TMP_CONFIG} backup-push ${PGDATA}
 
 
 { while : ; do pgbench -c 2 -f /tmp/sql/transactions.sql -T 10000 --no-vacuum || true; done } &
+pid=$!
 sleep 3
 
-for i in 1 2 3
+for i in 1 2 3 4 5
 do
   start_lsn=$(psql -Atc "SELECT pg_current_wal_lsn();")
-  pgbench -c 10 -f /tmp/sql/transactions.sql -t 40000 --no-vacuum || true
+  pgbench -c 3 -f /tmp/sql/transactions.sql -t 10000 --no-vacuum || true
   sleep 1
   end_lsn=$(psql -Atc "SELECT pg_current_wal_lsn();")
   wal_volume=$(psql -Atc "SELECT pg_size_pretty(pg_wal_lsn_diff('$end_lsn', '$start_lsn'));")
@@ -53,6 +54,7 @@ pg_dumpall -f /tmp/dump1
 
 #sleep 3600
 
+kill $pid
 /tmp/scripts/drop_pg.sh
 
 wal-g --config=${TMP_CONFIG} backup-fetch ${PGDATA} LATEST
