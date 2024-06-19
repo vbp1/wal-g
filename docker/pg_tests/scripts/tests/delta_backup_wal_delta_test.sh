@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e -x
 
+
+TRANSACTIONS=1000
+CLIENTS=3
+
 CONFIG_FILE="/tmp/configs/delta_backup_wal_delta_test_config.json"
 COMMON_CONFIG="/tmp/configs/common_config.json"
 TMP_CONFIG="/tmp/configs/tmp_config.json"
@@ -22,12 +26,12 @@ echo "archive_timeout = 600" >> /var/lib/postgresql/12/main/postgresql.conf
 
 wal-g --config=${TMP_CONFIG} delete everything FORCE --confirm
 
-#pgbench -i -f /tmp/sql/init.sql -s 10 postgres
+# pgbench -i -f /tmp/sql/init.sql -s 10 postgres
 psql -f /tmp/sql/init.sql
-psql -f /tmp/sql/check_toast.sql
+# psql -f /tmp/sql/check_toast.sql
 
-pgbench -c 10 -f /tmp/sql/transactions.sql -t 10000 --no-vacuum || true
-psql -f /tmp/sql/check_toast.sql
+pgbench -c "$CLIENTS" -f /tmp/sql/transactions.sql -t "$TRANSACTIONS" --no-vacuum || true
+# psql -f /tmp/sql/check_toast.sql
 
 wal-g --config=${TMP_CONFIG} backup-push ${PGDATA}
 
@@ -39,7 +43,7 @@ sleep 3
 for i in 1 2 3 4 5
 do
   start_lsn=$(psql -Atc "SELECT pg_current_wal_lsn();")
-  pgbench -c 3 -f /tmp/sql/transactions.sql -t 10000 --no-vacuum || true
+  pgbench -c "$CLIENTS" -f /tmp/sql/transactions.sql -t "$TRANSACTIONS" --no-vacuum || true
   sleep 1
   end_lsn=$(psql -Atc "SELECT pg_current_wal_lsn();")
   wal_volume=$(psql -Atc "SELECT pg_size_pretty(pg_wal_lsn_diff('$end_lsn', '$start_lsn'));")
@@ -47,14 +51,12 @@ do
   wal-g --config=${TMP_CONFIG} backup-push ${PGDATA}
 done
 
-psql -f /tmp/sql/check_toast.sql
-
-pg_dumpall -f /tmp/dump1
-
+# psql -f /tmp/sql/check_toast.sql
 
 #sleep 3600
 
 kill $pid
+# pg_dumpall -f /tmp/dump1
 /tmp/scripts/drop_pg.sh
 
 wal-g --config=${TMP_CONFIG} backup-fetch ${PGDATA} LATEST
